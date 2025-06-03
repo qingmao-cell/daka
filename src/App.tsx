@@ -129,6 +129,15 @@ function App() {
       <div style={{ marginBottom: "1rem" }}>
         <span>当前身份：</span>
         <button
+          onClick={() => setUserId("userhsm")}
+          style={{
+            marginRight: "0.5rem",
+            backgroundColor: userId === "userhsm" ? "#eee" : "",
+          }}
+        >
+          七
+        </button>
+        <button
           onClick={() => setUserId("cat001")}
           style={{
             marginRight: "0.5rem",
