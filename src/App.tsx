@@ -148,7 +148,9 @@ function App() {
         下班打卡
       </button>
 
-      <h2>{currentMonth} 的打卡记录：</h2>
+      <p>
+        🧮 本月总工时：{hours}小时 {minutes}分钟
+      </p>
       <ul>
         {sessions.map((s, i) => (
           <li key={i}>
@@ -175,9 +177,6 @@ function App() {
         ))}
       </ul>
 
-      <p>
-        🧮 今日总工时：{hours}小时 {minutes}分钟
-      </p>
       <div style={{ marginBottom: "1rem" }}>
         <label>
           选择月份：
