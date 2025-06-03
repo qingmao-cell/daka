@@ -90,12 +90,11 @@ function App() {
     const currentMonth = now.getMonth();
 
     const monthlySessions = sessions.filter((s) => {
-      const start = new Date(s.start);
+      const start = new Date(s.start); // ✅ 修正点：创建 Date 对象
       return (
         start.getFullYear() === currentYear && start.getMonth() === currentMonth
       );
     });
-
     const totalMinutes = monthlySessions.reduce((sum, s) => {
       if (!s.end) return sum;
       const diff =
@@ -148,9 +147,9 @@ function App() {
         下班打卡
       </button>
 
-      <p>
+      <h2>
         🧮 本月总工时：{hours}小时 {minutes}分钟
-      </p>
+      </h2>
       <ul>
         {sessions.map((s, i) => (
           <li key={i}>
