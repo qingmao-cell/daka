@@ -84,31 +84,31 @@ function App() {
     }
   };
 
-  // （已移除重复的 useEffect）
+  function getMonthlyTotalMinutes() {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
 
-  const getTotalMinutes = () => {
-    return (
-      sessions.reduce((total, s) => {
-        if (s.end) {
-          // 统一解析为日本时间
-          const start = new Date(
-            new Date(s.start).toLocaleString("en-US", {
-              timeZone: "Asia/Tokyo",
-            })
-          ).getTime();
-          const end = new Date(
-            new Date(s.end).toLocaleString("en-US", { timeZone: "Asia/Tokyo" })
-          ).getTime();
-          return total + (end - start);
-        }
-        return total;
-      }, 0) / 60000
-    );
-  };
-  const totalMinutes = Math.floor(getTotalMinutes());
+    const monthlySessions = sessions.filter((s) => {
+      const start = new Date(s.start);
+      return (
+        start.getFullYear() === currentYear && start.getMonth() === currentMonth
+      );
+    });
+
+    const totalMinutes = monthlySessions.reduce((sum, s) => {
+      if (!s.end) return sum;
+      const diff =
+        (new Date(s.end).getTime() - new Date(s.start).getTime()) / 60000;
+      return sum + diff;
+    }, 0);
+
+    return Math.floor(totalMinutes);
+  }
+
+  const totalMinutes = getMonthlyTotalMinutes();
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-
   return (
     <div style={{ padding: "2rem" }}>
       <h1>🐭 工时打卡工具</h1>
