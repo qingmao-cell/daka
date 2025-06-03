@@ -20,7 +20,7 @@ function App() {
   // 上班打卡
   const handleCheckIn = async () => {
     console.log("👆 触发上班打卡");
-    const { error } = await supabase.from("work-sessions").insert([
+    const { error } = await supabase.from("work_sessions").insert([
       {
         user_id: userId, // 🐭 你可以写成你的昵称
         start: new Date().toLocaleString("sv-SE", { timeZone: "Asia/Tokyo" }),
@@ -39,7 +39,7 @@ function App() {
     const lastDay = new Date(year, month, 0, 23, 59, 59); // 本月最后一天 23:59:59
 
     const { data, error } = await supabase
-      .from("work-sessions")
+      .from("work_sessions")
       .select("*")
       .eq("user_id", userId)
       .gte("start", firstDay.toISOString())
@@ -58,7 +58,7 @@ function App() {
   // 下班打卡
   const handleCheckOut = async () => {
     const { data, error: fetchError } = await supabase
-      .from("work-sessions")
+      .from("work_sessions")
       .select("*")
       .eq("user_id", userId)
       .is("end", null)
@@ -72,7 +72,7 @@ function App() {
     if (data && data.length > 0) {
       const latest = data[0];
       const { error: updateError } = await supabase
-        .from("work-sessions")
+        .from("work_sessions")
         .update({ end: new Date().toISOString() })
         .eq("id", latest.id);
       if (updateError) {
