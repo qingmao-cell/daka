@@ -73,7 +73,9 @@ function App() {
       const latest = data[0];
       const { error: updateError } = await supabase
         .from("work_sessions")
-        .update({ end: new Date().toISOString() })
+        .update({
+          end: new Date().toLocaleString("sv-SE", { timeZone: "Asia/Tokyo" }),
+        })
         .eq("id", latest.id);
       if (updateError) {
         console.error("下班打卡失败", updateError);
@@ -90,24 +92,34 @@ function App() {
     const currentMonth = now.getMonth();
 
     const monthlySessions = sessions.filter((s) => {
-      const start = new Date(s.start); // ✅ 修正点：创建 Date 对象
+      const start = new Date(
+        new Date(s.start).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+      );
       return (
         start.getFullYear() === currentYear && start.getMonth() === currentMonth
       );
     });
+
     const totalMinutes = monthlySessions.reduce((sum, s) => {
       if (!s.end) return sum;
-      const diff =
-        (new Date(s.end).getTime() - new Date(s.start).getTime()) / 60000;
+
+      const start = new Date(
+        new Date(s.start).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+      );
+      const end = new Date(
+        new Date(s.end).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
+      );
+      const diff = Math.floor((end.getTime() - start.getTime()) / 60000);
       return sum + diff;
     }, 0);
 
-    return Math.floor(totalMinutes);
+    return {
+      hours: Math.floor(totalMinutes / 60),
+      minutes: totalMinutes % 60,
+    };
   }
 
-  const totalMinutes = getMonthlyTotalMinutes();
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
+  const { hours, minutes } = getMonthlyTotalMinutes();
   return (
     <div style={{ padding: "2rem" }}>
       <h1>🐭 工时打卡工具</h1>
