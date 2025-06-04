@@ -21,7 +21,16 @@ const DateInput: React.FC<DateInputProps> = ({
   maxDate,
   minDate,
 }) => {
-  const today = getTodayJST();
+  const today = getTodayJST(); // "2025-06-04"
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.value;
+    if (selected > today) {
+      alert("🐭 不可以选择未来的日期喔！");
+      return;
+    }
+    onChange(selected);
+  };
 
   return (
     <label
@@ -35,7 +44,7 @@ const DateInput: React.FC<DateInputProps> = ({
         value={value}
         max={maxDate || today}
         min={minDate}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={handleChange}
         style={{ marginLeft: "0.5rem" }}
       />
     </label>
