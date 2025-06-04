@@ -9,6 +9,7 @@ interface Session {
   start: string;
   end?: string;
   paid?: boolean;
+  break_minutes?: number;
 }
 
 interface Props {
@@ -36,10 +37,20 @@ export default function SettlementTool(props: Props) {
   const totalMinutes = useMemo(() => {
     return filtered.reduce((sum, s) => {
       if (!s.end) return sum;
+
+      // 1) 计算这一条记录的“上班-下班”的总分钟数
       const sStart = DateTime.fromISO(s.start);
       const sEnd = DateTime.fromISO(s.end);
-      const diff = sEnd.diff(sStart, "minutes").minutes;
-      return sum + Math.floor(diff);
+      const rawMinutes = sEnd.diff(sStart, "minutes").minutes; // e.g. 420 分钟
+
+      // 2) 取出这条记录里存的休息分钟数（没有记录则默认为 0）
+      const breakMinutes = s.break_minutes ?? 0; // e.g. 60
+
+      // 3) 用 “rawMinutes - breakMinutes” 得到这条记录的“实际工作分钟数”
+      const workMinutes = Math.max(0, Math.floor(rawMinutes) - breakMinutes);
+
+      // 累加到总和
+      return sum + workMinutes;
     }, 0);
   }, [filtered]);
 
