@@ -53,6 +53,29 @@ export default function SettlementTool(props: Props) {
       return sum + workMinutes;
     }, 0);
   }, [filtered]);
+  // totalMinutes 是实际工作分钟数（已扣除休息）
+  // totalMinutes 是已扣除休息后的实际工时（分钟）
+  const hoursInteger = Math.floor(totalMinutes / 60); // 取整小时部分
+  let remainderMinutes = totalMinutes % 60; // 剩余分钟部分
+
+  // 如果仅超出 10 分钟，就把它视为 0 分钟（这样 70 → 60）
+  if (remainderMinutes > 0 && remainderMinutes <= 10) {
+    remainderMinutes = 0;
+  }
+
+  let paidHours: number;
+  if (totalMinutes <= 0) {
+    paidHours = 0;
+  } else if (remainderMinutes === 0) {
+    // 恰好整点，直接就是 hoursInteger
+    paidHours = hoursInteger;
+  } else if (remainderMinutes <= 30) {
+    // 超出 10 分钟后，如果余数在 2–30 分钟之间，算半小时
+    paidHours = hoursInteger + 0.5;
+  } else {
+    // 余数 > 30 分钟，算下一个整小时
+    paidHours = hoursInteger + 1;
+  }
 
   const handleMarkPaid = async () => {
     const ids = filtered.map((s) => s.id);
@@ -68,7 +91,7 @@ export default function SettlementTool(props: Props) {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   const [hourlyRate, setHourlyRate] = useState(45);
-  const totalWage = hours * hourlyRate;
+  const totalWage = paidHours * hourlyRate;
   const todayJST = new Date()
     .toLocaleString("sv-SE", { timeZone: "Asia/Tokyo" }) // "2025-06-04 21:30:00"
     .split(" ")[0]; // 👉 "2025-06-04"
