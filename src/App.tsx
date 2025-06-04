@@ -98,7 +98,7 @@ function App() {
       const { error: updateError } = await supabase
         .from("work_sessions")
         .update({
-          end: new Date().toLocaleString("sv-SE", { timeZone: "Asia/Tokyo" }),
+          end: endDate.toLocaleString("sv-SE", { timeZone: "Asia/Tokyo" }),
         })
         .eq("id", latest.id);
       if (updateError) {
