@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./lib/supabase";
+import { DateTime } from "luxon";
 // 定义你的打卡记录结构
 type WorkSession = {
   id: number;
@@ -17,6 +18,9 @@ function App() {
       "0"
     )}`;
   });
+  const [manualDate, setManualDate] = useState("");
+  const [manualStart, setManualStart] = useState("");
+  const [manualEnd, setManualEnd] = useState("");
   // 上班打卡
   const handleCheckIn = async () => {
     console.log("👆 触发上班打卡");
@@ -71,6 +75,22 @@ function App() {
 
     if (data && data.length > 0) {
       const latest = data[0];
+      // 这里直接使用 Date 对象（数据库里已是日本时间的字符串）
+      const start = new Date(latest.start);
+      let endDate = new Date(); // 当前时间
+
+      let diffMinutes = Math.floor(
+        (endDate.getTime() - start.getTime()) / 60000
+      );
+      if (diffMinutes > 300) {
+        const confirmBreak = window.confirm(
+          "今天工作超过5小时，要扣除1小时休息吗？"
+        );
+        if (confirmBreak) {
+          endDate = new Date(endDate.getTime() - 60 * 60000); // 往前减1小时
+        }
+      }
+
       const { error: updateError } = await supabase
         .from("work_sessions")
         .update({
@@ -85,7 +105,41 @@ function App() {
       }
     }
   };
+  const handleManualSubmit = async () => {
+    if (!manualDate || !manualStart || !manualEnd) return;
 
+    let start = DateTime.fromISO(`${manualDate}T${manualStart}`, {
+      zone: "Asia/Tokyo",
+    });
+    let end = DateTime.fromISO(`${manualDate}T${manualEnd}`, {
+      zone: "Asia/Tokyo",
+    });
+
+    let diffMinutes = end.diff(start, "minutes").minutes;
+
+    if (diffMinutes > 300) {
+      const confirmBreak = window.confirm(
+        "这次打卡超过5小时，要扣除1小时休息时间吗？"
+      );
+      if (confirmBreak) {
+        end = end.minus({ minutes: 60 }); // 往前减去 60 分钟
+      }
+    }
+
+    const { error } = await supabase.from("work_sessions").insert([
+      {
+        user_id: userId,
+        start: start.toISO(),
+        end: end.toISO(),
+      },
+    ]);
+
+    if (error) {
+      console.error("补记失败", error);
+    } else {
+      await loadSessions();
+    }
+  };
   function getMonthlyTotalMinutes() {
     const now = new Date();
     const currentYear = now.getFullYear();
@@ -125,7 +179,7 @@ function App() {
       <h1>🐭 工时打卡工具</h1>
 
       {/* 占位说明，提示身份切换按钮位置 */}
-      <p style={{ fontSize: "0.9rem", color: "#888" }}>选择当前身份：</p>
+
       <div style={{ marginBottom: "1rem" }}>
         <span>当前身份：</span>
         <button
@@ -168,7 +222,7 @@ function App() {
         下班打卡
       </button>
 
-      <h2>
+      <h2 style={{ marginTop: "3rem" }}>
         🧮 本月总工时：{hours}小时 {minutes}分钟
       </h2>
       <ul>
@@ -206,6 +260,28 @@ function App() {
             onChange={(e) => setCurrentMonth(e.target.value)}
           />
         </label>
+      </div>
+      <div style={{ marginTop: "3rem" }}>
+        <h3>🛠 补记打卡</h3>
+        <input
+          type="date"
+          value={manualDate}
+          onChange={(e) => setManualDate(e.target.value)}
+          style={{ marginRight: "0.5rem" }}
+        />
+        <input
+          type="time"
+          value={manualStart}
+          onChange={(e) => setManualStart(e.target.value)}
+          style={{ marginRight: "0.5rem" }}
+        />
+        <input
+          type="time"
+          value={manualEnd}
+          onChange={(e) => setManualEnd(e.target.value)}
+          style={{ marginRight: "0.5rem" }}
+        />
+        <button onClick={handleManualSubmit}>补记</button>
       </div>
     </div>
   );
