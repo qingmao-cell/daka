@@ -71,3 +71,7 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+body {
+  font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans", "Helvetica Neue",
+    sans-serif;
+}

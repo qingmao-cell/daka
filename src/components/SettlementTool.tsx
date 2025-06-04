@@ -2,6 +2,7 @@
 import { useState, useMemo } from "react";
 import { DateTime } from "luxon";
 import { supabase } from "../lib/supabase";
+import DateInput from "./DateInput";
 
 interface Session {
   id: number;
@@ -70,23 +71,27 @@ export default function SettlementTool(props: Props) {
       }}
     >
       <h3>💰 工资结算工具</h3>
-      <label>
-        开始日期：
-        <input
-          type="date"
+      <div
+        style={{
+          display: "flex",
+          gap: "1rem",
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        <DateInput
+          label="开始日期："
           value={rangeStart}
-          onChange={(e) => setRangeStart(e.target.value)}
+          onChange={(value: string) => setRangeStart(value)}
+          maxDate={todayJST}
         />
-      </label>
-      <label style={{ marginLeft: "1rem" }}>
-        结束日期：
-        <input
-          type="date"
+        <DateInput
+          label="结束日期："
           value={rangeEnd}
-          onChange={(e) => setRangeEnd(e.target.value)}
-          max={todayJST}
+          onChange={(value: string) => setRangeEnd(value)}
+          maxDate={todayJST}
         />
-      </label>
+      </div>
       <p>
         🧮 工时统计：{hours}小时 {minutes}分钟
       </p>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "./lib/supabase";
 import { DateTime } from "luxon";
 import SettlementTool from "./components/SettlementTool";
+import DateInput from "./components/DateInput";
 
 // 定义你的打卡记录结构
 type WorkSession = {
@@ -267,26 +268,34 @@ function App() {
       </div>
       <div style={{ marginTop: "3rem" }}>
         <h3>🛠 补记打卡</h3>
-        <input
-          type="date"
-          value={manualDate}
-          onChange={(e) => setManualDate(e.target.value)}
-          style={{ marginRight: "0.5rem" }}
-          max={todayJST}
-        />
-        <input
-          type="time"
-          value={manualStart}
-          onChange={(e) => setManualStart(e.target.value)}
-          style={{ marginRight: "0.5rem" }}
-        />
-        <input
-          type="time"
-          value={manualEnd}
-          onChange={(e) => setManualEnd(e.target.value)}
-          style={{ marginRight: "0.5rem" }}
-        />
-        <button onClick={handleManualSubmit}>补记</button>
+        <div
+          style={{
+            display: "flex",
+            gap: "1rem",
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <DateInput
+            value={manualDate}
+            onChange={(value: string) => setManualDate(value)}
+            maxDate={todayJST}
+          />
+
+          <input
+            type="time"
+            value={manualStart}
+            onChange={(e) => setManualStart(e.target.value)}
+            style={{ marginRight: "0.5rem" }}
+          />
+          <input
+            type="time"
+            value={manualEnd}
+            onChange={(e) => setManualEnd(e.target.value)}
+            style={{ marginRight: "0.5rem" }}
+          />
+          <button onClick={handleManualSubmit}>补记</button>
+        </div>
       </div>
       <SettlementTool
         sessions={sessions}
