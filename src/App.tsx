@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { supabase } from "./lib/supabase";
 import { DateTime } from "luxon";
+import SettlementTool from "./components/SettlementTool";
 
 // 定义你的打卡记录结构
 type WorkSession = {
   id: number;
   start: string; // ISO 字符串
   end?: string;
+  paid: boolean; // true 表示这笔工时已清算
 };
 
 function App() {
@@ -173,7 +175,9 @@ function App() {
       minutes: totalMinutes % 60,
     };
   }
-
+  const todayJST = new Date()
+    .toLocaleString("sv-SE", { timeZone: "Asia/Tokyo" }) // "2025-06-04 21:30:00"
+    .split(" ")[0]; // 👉 "2025-06-04"
   const { hours, minutes } = getMonthlyTotalMinutes();
   return (
     <div style={{ padding: "2rem" }}>
@@ -234,7 +238,6 @@ function App() {
               day: "2-digit",
               hour: "2-digit",
               minute: "2-digit",
-
               hour12: false,
               timeZone: "Asia/Tokyo",
             })}{" "}
@@ -243,11 +246,11 @@ function App() {
               ? new Date(s.end).toLocaleTimeString("ja-JP", {
                   hour: "2-digit",
                   minute: "2-digit",
-
                   hour12: false,
                   timeZone: "Asia/Tokyo",
                 })
               : "（未打下班卡）"}
+            {s.paid && " ✅"}
           </li>
         ))}
       </ul>
@@ -269,6 +272,7 @@ function App() {
           value={manualDate}
           onChange={(e) => setManualDate(e.target.value)}
           style={{ marginRight: "0.5rem" }}
+          max={todayJST}
         />
         <input
           type="time"
@@ -284,6 +288,11 @@ function App() {
         />
         <button onClick={handleManualSubmit}>补记</button>
       </div>
+      <SettlementTool
+        sessions={sessions}
+        userId={userId}
+        onRefresh={loadSessions}
+      ></SettlementTool>
     </div>
   );
 }
