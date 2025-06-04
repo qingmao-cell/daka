@@ -335,7 +335,7 @@ function App() {
           onClick={() => setUserId("guest")}
           style={{ backgroundColor: userId === "guest" ? "#eee" : "" }}
         >
-          访客
+          测试
         </button>
       </div>
 
