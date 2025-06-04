@@ -20,7 +20,7 @@ export default function SettlementTool(props: Props) {
   const { sessions, userId, onRefresh } = props;
   const [rangeStart, setRangeStart] = useState("");
   const [rangeEnd, setRangeEnd] = useState("");
-
+  console.log("settlement tool received userId", userId);
   const filtered = useMemo(() => {
     if (!rangeStart || !rangeEnd) return [];
     const start = DateTime.fromISO(rangeStart);
