@@ -332,7 +332,7 @@ function App() {
           27
         </button>
         <button
-          onClick={() => setUserId("guest")}
+          onClick={() => setUserId("tantan")}
           style={{ backgroundColor: userId === "tantan" ? "#eee" : "" }}
         >
           炭炭
