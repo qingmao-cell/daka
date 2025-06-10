@@ -15,7 +15,7 @@ type WorkSession = {
 
 function App() {
   const [sessions, setSessions] = useState<WorkSession[]>([]);
-  const [userId, setUserId] = useState("cat001"); // 默认猫猫
+  const [userId, setUserId] = useState("cat001");
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
@@ -320,7 +320,7 @@ function App() {
             backgroundColor: userId === "cat001" ? "#eee" : "",
           }}
         >
-          猫猫
+          胡椒
         </button>
         <button
           onClick={() => setUserId("user27")}
@@ -330,6 +330,12 @@ function App() {
           }}
         >
           27
+        </button>
+        <button
+          onClick={() => setUserId("guest")}
+          style={{ backgroundColor: userId === "tantan" ? "#eee" : "" }}
+        >
+          炭炭
         </button>
         <button
           onClick={() => setUserId("guest")}
