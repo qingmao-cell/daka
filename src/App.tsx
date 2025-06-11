@@ -28,7 +28,8 @@ function App() {
   const [manualEnd, setManualEnd] = useState("");
   const [manualBreak, setManualBreak] = useState<number>(0);
   // 在组件最上方，先生成这些时间选项
-  const timeOptions = Array.from({ length: 24 * 4 }, (_, i) => {
+  const timeOptions = Array.from({ length: (24 - 6) * 4 }, (_, idx) => {
+    const i = idx + 6 * 4; // offset by 6 hours (start at 06:00)
     const totalMinutes = i * 15;
     const h = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
     const m = String(totalMinutes % 60).padStart(2, "0");
