@@ -1,8 +1,6 @@
 #root {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
 }
 
 .logo {
@@ -39,4 +37,16 @@
 
 .read-the-docs {
   color: #888;
+}
+.time-control {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  min-width: 8rem;
+  height: 2.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  margin: 0 0.5rem;
+  text-align: center;
+  background-color: #fff;
 }

@@ -15,7 +15,7 @@ type WorkSession = {
 
 function App() {
   const [sessions, setSessions] = useState<WorkSession[]>([]);
-  const [userId, setUserId] = useState("cat001");
+  const [userId, setUserId] = useState<string | null>(null);
   const [currentMonth, setCurrentMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
@@ -26,22 +26,30 @@ function App() {
   const [manualDate, setManualDate] = useState("");
   const [manualStart, setManualStart] = useState("");
   const [manualEnd, setManualEnd] = useState("");
-  // 上班打卡
-  const handleCheckIn = async () => {
-    console.log("👆 触发上班打卡");
-    const { error } = await supabase.from("work_sessions").insert([
-      {
-        user_id: userId, // 🐭 你可以写成你的昵称
-        start: new Date().toLocaleString("sv-SE", { timeZone: "Asia/Tokyo" }),
-      },
-    ]);
-    if (error) {
-      console.error("打卡失败：", error);
-    } else {
-      console.log("✅ 打卡成功！");
-      await loadSessions(); // 新增：打卡成功后刷新记录
-    }
-  };
+  const [manualBreak, setManualBreak] = useState<number>(0);
+  // 在组件最上方，先生成这些时间选项
+  const timeOptions = Array.from({ length: 24 * 4 }, (_, i) => {
+    const totalMinutes = i * 15;
+    const h = String(Math.floor(totalMinutes / 60)).padStart(2, "0");
+    const m = String(totalMinutes % 60).padStart(2, "0");
+    return `${h}:${m}`;
+  });
+  // // 上班打卡
+  // const handleCheckIn = async () => {
+  //   console.log("👆 触发上班打卡");
+  //   const { error } = await supabase.from("work_sessions").insert([
+  //     {
+  //       user_id: userId, // 🐭 你可以写成你的昵称
+  //       start: new Date().toLocaleString("sv-SE", { timeZone: "Asia/Tokyo" }),
+  //     },
+  //   ]);
+  //   if (error) {
+  //     console.error("打卡失败：", error);
+  //   } else {
+  //     console.log("✅ 打卡成功！");
+  //     await loadSessions(); // 新增：打卡成功后刷新记录
+  //   }
+  // };
   const loadSessions = async () => {
     const [year, month] = currentMonth.split("-").map(Number);
     const firstDay = new Date(year, month - 1, 1);
@@ -64,181 +72,54 @@ function App() {
     loadSessions();
   }, [userId, currentMonth]);
 
-  const handleCheckOut = async () => {
-    // 1. 先查出最新一条未打下班卡的记录
-    const { data, error: fetchError } = await supabase
-      .from("work_sessions")
-      .select("*")
-      .eq("user_id", userId)
-      .is("end", null)
-      .order("start", { ascending: false })
-      .limit(1);
-
-    if (fetchError) {
-      console.error("查询失败：", fetchError);
+  const handleManualSubmit = async () => {
+    // 1. 校验必填
+    if (!manualDate || !manualStart || !manualEnd) {
+      alert("请先选择日期和时间");
       return;
     }
-    if (!data || data.length === 0) return;
 
-    const latest = data[0];
-
-    // 2. 用 Luxon 构造开始与当前“下班”时间
-    const start = DateTime.fromISO(latest.start, { zone: "Asia/Tokyo" });
-    const end = DateTime.now().setZone("Asia/Tokyo");
-
-    // 3. 定义午休/晚休时段（同补记逻辑）
-    const restSpans = [
-      [11, 30, 13, 30], // 午休 11:30–13:30
-      [17, 0, 19, 0], // 晚休 17:00–19:00
-    ];
-
-    // 4. 判断这段上班与休息时段是否重叠
-    let breakMinutes = 0;
-    const overlapInfo = restSpans.find(([sh, sm, eh, em]) => {
-      const restStart = DateTime.fromObject(
-        {
-          year: start.year,
-          month: start.month,
-          day: start.day,
-          hour: sh,
-          minute: sm,
-        },
-        { zone: "Asia/Tokyo" }
-      );
-      const restEnd = DateTime.fromObject(
-        {
-          year: start.year,
-          month: start.month,
-          day: start.day,
-          hour: eh,
-          minute: em,
-        },
-        { zone: "Asia/Tokyo" }
-      );
-      return start < restEnd && end > restStart;
-    });
-
-    if (overlapInfo) {
-      const input = window.prompt(
-        "🐭 本次打卡跨过了午休(11:30–13:30)或晚休(17:00–19:00)，请输入休息分钟数（0、60 或 120）：",
-        "60"
-      );
-      const minutes = parseInt(input ?? "0", 10);
-      if (!isNaN(minutes)) {
-        breakMinutes = minutes;
-      }
-    }
-
-    // 5. 更新这条记录：写入 end 和 break_minutes
-    const { error: updateError } = await supabase
-      .from("work_sessions")
-      .update({
-        end: end.toISO(),
-        break_minutes: breakMinutes,
-      })
-      .eq("id", latest.id);
-
-    if (updateError) {
-      console.error("下班打卡失败", updateError);
-    } else {
-      console.log("✅ 下班打卡成功，break_minutes =", breakMinutes);
-      await loadSessions();
-    }
-  };
-
-  // 省略 import 部分...
-  const handleManualSubmit = async () => {
-    if (!manualDate || !manualStart || !manualEnd) return;
-
-    // 1) 用 Luxon 构造开始/结束 DateTime
-    const start = DateTime.fromISO(`${manualDate}T${manualStart}`, {
+    // 2. 构造开始/结束的 Luxon DateTime
+    const startDT = DateTime.fromISO(`${manualDate}T${manualStart}`, {
       zone: "Asia/Tokyo",
     });
-    const end = DateTime.fromISO(`${manualDate}T${manualEnd}`, {
+    const endDT = DateTime.fromISO(`${manualDate}T${manualEnd}`, {
       zone: "Asia/Tokyo",
     });
 
-    // 日志：确认 start/end 的 ISO 字符串，便于调试
-    console.log("🟢 [调试] start:", start.toISO());
-    console.log("🟢 [调试] end  :", end.toISO());
+    // 3. 计算工时（小时）
+    const totalHoursRaw = endDT.diff(startDT, "hours").hours - manualBreak / 60;
+    const workHours = Number(totalHoursRaw.toFixed(2));
+    const breakHours = manualBreak / 60;
 
-    // 2) 定义“午休”和“晚休”两个区间（小时+分钟），后面会用这些值来生成真实的 DateTime
-    const restSpans = [
-      [11, 30, 13, 30], // 午休 11:30–13:30
-      [17, 0, 19, 0], // 晚休 17:00–19:00
-    ];
-
-    // 3) 先给一个变量，存最终要记录的休息分钟数
-    let breakMinutes = 0;
-
-    // 4) 用 any/find 之类的方法来判断：只要“start < 区间结束 && end > 区间开始”，就属于“跨过”这个休息时段
-    const overlapInfo = restSpans.find(([sh, sm, eh, em]) => {
-      // 注意：我们要把“同一天同样年月日”加到小时/分钟里，才能做精确比较
-      const restStart = DateTime.fromObject(
-        {
-          year: start.year,
-          month: start.month,
-          day: start.day,
-          hour: sh,
-          minute: sm,
-        },
-        { zone: "Asia/Tokyo" }
-      );
-      const restEnd = DateTime.fromObject(
-        {
-          year: start.year,
-          month: start.month,
-          day: start.day,
-          hour: eh,
-          minute: em,
-        },
-        { zone: "Asia/Tokyo" }
-      );
-
-      // 日志：每一个休息区间的真实 DateTime
-      console.log(
-        "🟡 [调试] restSpan:",
-        restStart.toISO(),
-        "—",
-        restEnd.toISO(),
-        "，start < restEnd? ",
-        start < restEnd,
-        "，end > restStart? ",
-        end > restStart
-      );
-
-      return start < restEnd && end > restStart;
-    });
-
-    // 5) 如果 overlapInfo 不为 undefined，就说明跨过了至少一个休息区间
-    if (overlapInfo) {
-      // 弹窗询问“实际休息分钟数”——最多给 0、60 或 120 的选项
-      const input = window.prompt(
-        "🐭 本次补记打卡时间跨过了“午休(11:30–13:30)或晚休(17:00–19:00)”，请输入本次休息分钟数（0、60 或 120）：",
-        "60"
-      );
-      const minutes = parseInt(input ?? "0", 10);
-      if (!isNaN(minutes)) {
-        breakMinutes = minutes;
-      }
-      // 日志：看看用户到底输入了多少
-      console.log("🟢 [调试] 用户输入的休息分钟数:", breakMinutes);
+    // 4. 弹窗确认
+    const confirmMsg =
+      `你确认要提交以下记录吗？\n` +
+      `日期： ${manualDate}\n` +
+      `时间： ${manualStart} — ${manualEnd}\n` +
+      `休息： ${breakHours} 小时\n` +
+      `工时： ${workHours} 小时\n\n` +
+      `点击“确定”提交，点击“取消”放弃。`;
+    if (!window.confirm(confirmMsg)) {
+      // 用户点了取消
+      return;
     }
 
-    // 6) 最后真正插入数据库：start、end、break_minutes
+    // 5. 用户确认后，真正写入数据库
     const { error } = await supabase.from("work_sessions").insert([
       {
         user_id: userId,
-        start: start.toISO(),
-        end: end.toISO(),
-        break_minutes: breakMinutes,
+        start: startDT.toISO(),
+        end: endDT.toISO(),
+        break_minutes: manualBreak,
       },
     ]);
 
     if (error) {
-      console.error("❌ 补记失败", error);
+      console.error("提交失败", error);
+      alert("提交出错，请重试");
     } else {
-      console.log("✅ 补记成功，break_minutes =", breakMinutes);
+      // 刷新记录
       await loadSessions();
     }
   };
@@ -296,6 +177,50 @@ function App() {
     .toLocaleString("sv-SE", { timeZone: "Asia/Tokyo" }) // "2025-06-04 21:30:00"
     .split(" ")[0]; // 👉 "2025-06-04"
   const { hours, minutes } = getMonthlyTotalMinutes();
+  // 一开始未选择用户时，仅显示选择用户界面
+  if (!userId) {
+    return (
+      <div style={{ padding: "2rem" }}>
+        <h1>🐭 工时打卡工具</h1>
+        <h2>请选择用户</h2>
+        <div style={{ marginBottom: "1rem" }}>
+          <button
+            onClick={() => setUserId("userhsm")}
+            style={{
+              marginRight: "0.5rem",
+              marginTop: "0.5rem",
+            }}
+          >
+            七
+          </button>
+          <button
+            onClick={() => setUserId("cat001")}
+            style={{ marginTop: "0.5rem", marginRight: "0.5rem" }}
+          >
+            胡椒
+          </button>
+          <button
+            onClick={() => setUserId("user27")}
+            style={{ marginTop: "0.5rem", marginRight: "0.5rem" }}
+          >
+            27
+          </button>
+          <button
+            onClick={() => setUserId("tantan")}
+            style={{ marginTop: "0.5rem", marginRight: "0.5rem" }}
+          >
+            炭炭
+          </button>
+          <button
+            onClick={() => setUserId("guest")}
+            style={{ marginTop: "0.5rem", marginRight: "0.5rem" }}
+          >
+            测试
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div style={{ padding: "2rem" }}>
       <h1>🐭 工时打卡工具</h1>
@@ -308,6 +233,7 @@ function App() {
           onClick={() => setUserId("userhsm")}
           style={{
             marginRight: "0.5rem",
+            marginTop: "0.5rem",
             backgroundColor: userId === "userhsm" ? "#eee" : "",
           }}
         >
@@ -317,6 +243,7 @@ function App() {
           onClick={() => setUserId("cat001")}
           style={{
             marginRight: "0.5rem",
+            marginTop: "0.5rem",
             backgroundColor: userId === "cat001" ? "#eee" : "",
           }}
         >
@@ -326,6 +253,7 @@ function App() {
           onClick={() => setUserId("user27")}
           style={{
             marginRight: "0.5rem",
+            marginTop: "0.5rem",
             backgroundColor: userId === "user27" ? "#eee" : "",
           }}
         >
@@ -333,26 +261,95 @@ function App() {
         </button>
         <button
           onClick={() => setUserId("tantan")}
-          style={{ backgroundColor: userId === "tantan" ? "#eee" : "" }}
+          style={{
+            marginRight: "0.5rem",
+            marginTop: "0.5rem",
+            backgroundColor: userId === "tantan" ? "#eee" : "",
+          }}
         >
           炭炭
         </button>
         <button
           onClick={() => setUserId("guest")}
-          style={{ backgroundColor: userId === "guest" ? "#eee" : "" }}
+          style={{
+            marginRight: "0.5rem",
+            marginTop: "0.5rem",
+            backgroundColor: userId === "guest" ? "#eee" : "",
+          }}
         >
           测试
         </button>
       </div>
+      <div style={{ marginTop: "3rem" }}>
+        <div style={{ display: "block" }}>
+          <h3>🛠 登记打卡</h3>
+          <div
+            style={{
+              display: "flex",
+              gap: "1rem",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <DateInput
+              value={manualDate}
+              onChange={(value: string) => setManualDate(value)}
+              maxDate={todayJST}
+            />
+            <input
+              type="time"
+              value={manualStart}
+              onChange={(e) => setManualStart(e.target.value)}
+              step={900}
+              style={{ marginRight: "0.5rem" }}
+              placeholder="开始时间"
+              list="time-list"
+            />
+            <datalist id="time-list">
+              {timeOptions.map((t) => (
+                <option key={t} value={t} />
+              ))}
+            </datalist>
+            <input
+              type="time"
+              value={manualEnd}
+              onChange={(e) => setManualEnd(e.target.value)}
+              step={900}
+              style={{ marginRight: "0.5rem" }}
+              list="time-list"
+            />
+            <datalist id="time-list">
+              {timeOptions.map((t) => (
+                <option key={t} value={t} />
+              ))}
+            </datalist>
+          </div>
 
-      <button onClick={handleCheckIn}>上班打卡</button>
-      <button onClick={handleCheckOut} style={{ marginLeft: "1rem" }}>
-        下班打卡
-      </button>
-
-      <h2 style={{ marginTop: "3rem" }}>
+          <div style={{ display: "flex", gap: "1rem", margin: "1rem 0" }}>
+            <span>休息：</span>
+            {[0, 60, 120].map((m) => (
+              <label key={m} style={{ cursor: "pointer" }}>
+                <input
+                  type="radio"
+                  name="break-time"
+                  value={m}
+                  checked={manualBreak === m}
+                  onChange={() => setManualBreak(m)}
+                />{" "}
+                {m / 60} 小时
+              </label>
+            ))}
+          </div>
+          <div style={{ textAlign: "center", marginTop: "1rem" }}>
+            <button style={{ width: "270px" }} onClick={handleManualSubmit}>
+              提交
+            </button>
+          </div>
+        </div>
+      </div>
+      <h3 style={{ marginTop: "3rem" }}>
         🧮 本月总工时：{hours}小时 {minutes}分钟
-      </h2>
+      </h3>
       <ul>
         {sessions.map((s, i) => (
           <li key={i}>
@@ -391,37 +388,7 @@ function App() {
           />
         </label>
       </div>
-      <div style={{ marginTop: "3rem" }}>
-        <h3>🛠 补记打卡</h3>
-        <div
-          style={{
-            display: "flex",
-            gap: "1rem",
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <DateInput
-            value={manualDate}
-            onChange={(value: string) => setManualDate(value)}
-            maxDate={todayJST}
-          />
 
-          <input
-            type="time"
-            value={manualStart}
-            onChange={(e) => setManualStart(e.target.value)}
-            style={{ marginRight: "0.5rem" }}
-          />
-          <input
-            type="time"
-            value={manualEnd}
-            onChange={(e) => setManualEnd(e.target.value)}
-            style={{ marginRight: "0.5rem" }}
-          />
-          <button onClick={handleManualSubmit}>补记</button>
-        </div>
-      </div>
       <SettlementTool
         sessions={sessions}
         userId={userId}
