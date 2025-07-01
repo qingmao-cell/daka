@@ -38,7 +38,7 @@ export default function SettlementTool(props: Props) {
     return filtered.reduce((sum, s) => {
       if (!s.end) return sum;
 
-      // 1) 计算这一条记录的“上班-下班”的总分钟数
+      // 1) 计算这一条记录的"上班-下班"的总分钟数
       const sStart = DateTime.fromISO(s.start);
       const sEnd = DateTime.fromISO(s.end);
       const rawMinutes = sEnd.diff(sStart, "minutes").minutes; // e.g. 420 分钟
@@ -46,7 +46,7 @@ export default function SettlementTool(props: Props) {
       // 2) 取出这条记录里存的休息分钟数（没有记录则默认为 0）
       const breakMinutes = s.break_minutes ?? 0; // e.g. 60
 
-      // 3) 用 “rawMinutes - breakMinutes” 得到这条记录的“实际工作分钟数”
+      // 3) 用 "rawMinutes - breakMinutes" 得到这条记录的"实际工作分钟数"
       const workMinutes = Math.max(0, Math.floor(rawMinutes) - breakMinutes);
 
       // 累加到总和
@@ -79,13 +79,18 @@ export default function SettlementTool(props: Props) {
 
   const handleMarkPaid = async () => {
     const ids = filtered.map((s) => s.id);
+    console.log("要更新的ID：", ids);
     if (ids.length === 0) return;
     const { error } = await supabase
       .from("work_sessions")
       .update({ paid: true })
       .in("id", ids);
-    if (error) console.error("清算失败", error);
-    else onRefresh();
+    if (error) {
+      console.error("清算失败", error);
+    } else {
+      console.log("清算成功，刷新数据");
+      onRefresh();
+    }
   };
 
   const hours = Math.floor(totalMinutes / 60);
