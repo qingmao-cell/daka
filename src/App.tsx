@@ -100,7 +100,7 @@ function App() {
       `时间： ${manualStart} — ${manualEnd}\n` +
       `休息： ${breakHours} 小时\n` +
       `工时： ${workHours} 小时\n\n` +
-      `点击“确定”提交，点击“取消”放弃。`;
+      `点击"确定"提交，点击"取消"放弃。`;
     if (!window.confirm(confirmMsg)) {
       // 用户点了取消
       return;
@@ -135,38 +135,30 @@ function App() {
   //   const m = totalMinutes % 60;
   //   return `${h > 0 ? `${h}小时` : ""}${m > 0 ? `${m}分钟` : ""}`;
   // };
-  function getMonthlyTotalMinutes() {
-    const now = DateTime.now().setZone("Asia/Tokyo");
-    const currentYear = now.year;
-    const currentMonth = now.month - 1; // 注意：Luxon 的 month 是 1-12，而 JS 的 getMonth 是 0-11
-
+  function getMonthlyTotalMinutes(currentMonth: string) {
+    // currentMonth 形如 "2025-06"
+    const [year, month] = currentMonth.split("-").map(Number);
+    // month: 1-12
     const monthlySessions = sessions.filter((s) => {
       const start = new Date(
         new Date(s.start).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
       );
-      return (
-        start.getFullYear() === currentYear && start.getMonth() === currentMonth
-      );
+      return start.getFullYear() === year && start.getMonth() + 1 === month;
     });
 
     const totalMinutes = monthlySessions.reduce((sum, s) => {
       if (!s.end) return sum;
-
       const start = new Date(
         new Date(s.start).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
       );
       const end = new Date(
         new Date(s.end).toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
       );
-
       const totalWorkMinutes = Math.floor(
         (end.getTime() - start.getTime()) / 60000
       );
-
       const totalBreakMinutes = s.break_minutes ?? 0;
-
       const workMinutes = totalWorkMinutes - totalBreakMinutes;
-
       return sum + workMinutes;
     }, 0);
     return {
@@ -177,7 +169,7 @@ function App() {
   const todayJST = new Date()
     .toLocaleString("sv-SE", { timeZone: "Asia/Tokyo" }) // "2025-06-04 21:30:00"
     .split(" ")[0]; // 👉 "2025-06-04"
-  const { hours, minutes } = getMonthlyTotalMinutes();
+  const { hours, minutes } = getMonthlyTotalMinutes(currentMonth);
   // 一开始未选择用户时，仅显示选择用户界面
   if (!userId) {
     return (
