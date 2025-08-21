@@ -22,8 +22,6 @@ Daka は **個人やチームの作業時間を記録・可視化する** Web �
 - **Database**: （もし Prisma / SQLite / PostgreSQL を使ってたらここに追記）
 - **Deployment**: Vercel
 
-## 🚀 デモ
-👉 （ここに Vercel デプロイ URL を貼る）
 
 ## 📂 プロジェクト構成
 daka/
