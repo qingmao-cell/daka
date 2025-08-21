@@ -46,4 +46,6 @@ npm install
 
 # 開発サーバーを起動
 npm run dev
+```
+
 http://localhost:3000 でアプリを確認できます。
