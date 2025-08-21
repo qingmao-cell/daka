@@ -1,54 +1,49 @@
-# React + TypeScript + Vite
+# ⏱️ Daka – 工数管理 Web アプリ
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Daka は **個人やチームの作業時間を記録・可視化する** Web アプリです。  
+日々の打刻をシンプルに入力し、工数の把握や効率改善に役立ちます。
 
-Currently, two official plugins are available:
+## ✨ 主な機能
+- 📝 **打刻入力**
+  - 日付・作業内容・工数を簡単に記録
+- 📊 **工数一覧 & 集計**
+  - 記録したデータをリスト表示
+  - 日別・週別・月別での集計を確認
+- 🔍 **フィルタ & 検索**
+  - プロジェクトやタグごとに工数を抽出
+- 🎯 **将来的な拡張予定**
+  - ユーザー認証 & 個別アカウント管理
+  - CSV / Excel 出力
+  - チーム単位での工数集計
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🛠️ 技術スタック
+- **Frontend**: Next.js / React
+- **Styling**: Tailwind CSS
+- **Database**: （もし Prisma / SQLite / PostgreSQL を使ってたらここに追記）
+- **Deployment**: Vercel
 
-## Expanding the ESLint configuration
+## 🚀 デモ
+👉 （ここに Vercel デプロイ URL を貼る）
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 📂 プロジェクト構成
+daka/
+├─ app/             # Next.js ページ
+├─ components/      # UI コンポーネント
+├─ lib/             # データ操作ロジック
+├─ public/          # 静的ファイル
+└─ README.md
+## ⚙️ セットアップ方法
+```bash
+# リポジトリをクローン
+git clone https://github.com/qingmao-cell/daka.git
+cd daka
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+# パッケージをインストール
+npm install
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+# 環境変数を設定 (.env) 必要に応じて
+# 例: DATABASE_URL=xxx
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+# 開発サーバーを起動
+npm run dev
+http://localhost:3000 でアプリを確認できます。
